@@ -1,4 +1,4 @@
 export interface IMenuType {
-  type: string;
-  label: string;
-}
+    type: string,
+    label: string
+  }

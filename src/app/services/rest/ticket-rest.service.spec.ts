@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { TicketRestService } from './ticket-rest.service';
 
-describe('RestService', () => {
+describe('TicketRestService', () => {
   let service: TicketRestService;
 
   beforeEach(() => {

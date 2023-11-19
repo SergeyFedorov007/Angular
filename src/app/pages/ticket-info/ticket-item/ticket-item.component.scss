@@ -1,3 +1,52 @@
-.ticket-info-wrap{
-  justify-content: space-between;
+.ticket-info-input-wrap span {
+    width: 150px;
+    display: inline-block;
+    
+}
+.user-info{
+    margin: 0 auto;
+    margin-left: 35%;
+}
+
+
+.personal-info {
+    margin: 0 auto;
+}
+
+.ticket-info {
+    width: 500px;
+    margin: 0 auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+    border: 2px solid black;
+    border-radius: 20px;
+    & .ticket-name {
+        font-size: 20px;
+    }
+    & .ticket-img {
+        margin: 0 auto;
+        & .ticket-img-tour{
+            width: 400px;
+        }
+    }
+}
+
+.ticket-header{
+    text-align: center;
+}
+
+button{
+    border: 1px solid rgb(101, 100, 100);
+    border-radius: 12px;
+    font-size: 14px;
+    margin: 0 auto;
+    padding: 10px;
+    margin-left: 20px;
+    margin-top: 10px;
+}
+button:hover{
+    background: rgb(165, 193, 165);
+    transition: all .5s;
+    
 }

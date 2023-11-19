@@ -20,30 +20,30 @@ import {
 export class BlocksStyleDirective implements OnInit, AfterViewInit, OnChanges {
   @Input() selector: string;
   @Input() initFirst: boolean = false;
-  @Input() items = [];
 
   @Output() renderComplete = new EventEmitter();
 
+  private items: HTMLElement[];
   private index: number = 0;
-  public activeElementIndex: number;
-
+  public activeElementIndex: number = 0;
   constructor(private el: ElementRef) {}
 
-  ngOnInit() {}
+  ngOnInit(): void {}
 
-  ngAfterViewInit(): void {
+  ngAfterViewInit() {
     this.activeElementIndex = 0;
-
     if (this.selector) {
       this.items = this.el.nativeElement.querySelectorAll(this.selector);
-
-      if (this.initFirst && this.items.length > 0) {
-        this.initStyle(0);
-      } else {
-        console.error('Не найдено элементов с предоставленным селектором');
+      if (this.initFirst) {
+        if (this.items[0]) {
+          (this.items[0] as HTMLElement).setAttribute(
+            'style',
+            'border:5px solid rgb(169,169,169); box-shadow: 10px 15px 5px rgb(149, 149, 149); transform: translateY(-5px)'
+          );
+        }
       }
     } else {
-      console.error('Селектор не предоставлен');
+      console.error('Не передан селектор');
     }
 
     setTimeout(() => {
@@ -54,30 +54,67 @@ export class BlocksStyleDirective implements OnInit, AfterViewInit, OnChanges {
   ngOnChanges(data: SimpleChanges): void {}
 
   initKeyUp(ev: KeyboardEvent): void {
-    if (this.items.length === 0) return;
+    console.log('ev', ev);
 
-    (this.items[this.index] as HTMLElement)?.removeAttribute('style');
-
-    if (ev.key === 'ArrowRight' && this.index < this.items.length - 1) {
-      this.index++;
-    } else if (ev.key === 'ArrowLeft' && this.index > 0) {
-      this.index--;
-    } else if (ev.key === 'ArrowUp' && this.index > 0) {
-      this.index--;
-    } else if (ev.key === 'ArrowDown' && this.index < this.items.length - 1) {
-      this.index++;
+    if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+      (this.items[this.index] as HTMLElement).removeAttribute('style');
     }
-
+    if (ev.key === 'ArrowRight') {
+      this.index++;
+      if (this.items[this.index]) {
+        (this.items[this.index] as HTMLElement).setAttribute(
+          'style',
+          'border:2px solid rgb(169,169,169); box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;; transform: translateY(-10px)'
+        );
+      } else if (this.items.length - 1) {
+        this.index = this.items.length - 1;
+        (this.items[this.index] as HTMLElement).setAttribute(
+          'style',
+          'border:2px solid rgb(169,169,169); box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;; transform: translateY(-10px)'
+        );
+      }
+    } else if (ev.key === 'ArrowLeft') {
+      this.index--;
+      if (this.items[this.index]) {
+        (this.items[this.index] as HTMLElement).setAttribute(
+          'style',
+          'border:2px solid rgb(169,169,169);  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;;transform: translateY(-10px)'
+        );
+      } else if ((this.index = -1)) {
+        this.index = 0;
+        (this.items[this.index] as HTMLElement).setAttribute(
+          'style',
+          'border:2px solid rgb(169,169,169); box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;;transform: translateY(-10px)'
+        );
+      }
+    }
     this.activeElementIndex = this.index;
-    this.initStyle(this.index);
+
+    if (this.items[this.index]) {
+      this.items[this.index].scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'start',
+      });
+    }
   }
 
   initStyle(index: number) {
     if (this.items[index]) {
       (this.items[index] as HTMLElement).setAttribute(
         'style',
-        'border: 2px solid red'
+        'border:5px solid rgb(105,105,105); box-shadow: 10px 5px 5px rgb(149, 149, 149);transform: translateY(-5px)'
       );
+    }
+  }
+
+  updateItems(): void {
+    this.items = this.el.nativeElement.querySelectorAll(this.selector);
+  }
+
+  removeItems(): void {
+    if (this.items[this.index]) {
+      (this.items[this.index] as HTMLElement).removeAttribute('style');
     }
   }
 }

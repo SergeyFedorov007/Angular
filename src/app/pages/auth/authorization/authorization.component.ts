@@ -1,104 +1,64 @@
-import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../../../services/auth/auth.service';
-import { IUser } from '../../../models/users';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AuthService } from 'src/app/services/auth/auth.service';
+import { IUser } from 'src/app/models/users';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute, Router } from '@angular/router';
-import {UserService} from "../../../services/user/user.service";
+import { Input } from '@angular/core';
+import { UserService } from 'src/app/services/user/user.service';
+
 
 @Component({
   selector: 'app-authorization',
   templateUrl: './authorization.component.html',
-  styleUrls: ['./authorization.component.scss'],
+  styleUrls: ['./authorization.component.scss']
 })
-export class AuthorizationComponent implements OnInit {
-  loginText = 'Login';
-  pswText = 'Password';
+
+export class AuthorizationComponent implements OnInit, OnDestroy {
+  loginText = 'Логин';
+  pswText = 'Пароль';
   psw: string;
   login: string;
   selectedValue: boolean;
   cardNumber: string;
   authTextButton: string;
-  constructor(
-    private authService: AuthService,
-    private messageService: MessageService,
-    private router: Router,
-    private userService: UserService
-    // private route: ActivatedRoute
-  ) {} // dependency injection
+  @Input() InputProp: string;
+  
+  
+  
+  constructor(private authService:AuthService,
+              private messageService: MessageService,
+              private router: Router,
+              private route: ActivatedRoute,
+              private userService: UserService) { }
 
   ngOnInit(): void {
-    this.authTextButton = 'Авторизоваться';
+    this.authTextButton = "Авторизоваться";
   }
 
-  vipStatusDelected() {
-    if (this.selectedValue) {
+  ngOnDestroy(): void {
+    console.log('destroy');
+  }
+
+  vipStatusSelected(): void {
     }
-  }
 
-  // Проверка на корректность ввода логина и пароля
+  onAuth(ev: Event):void  {
 
-  //   onAuth(ev: Event): void {
-  //   const authUser: IUser = {
-  //     psw: this.psw,
-  //     login: this.login,
-  //   };
-  //
-  //   const authStatus = this.authService.checkUser(authUser);
-  //   let statusText = '';
-  //   switch (authStatus) {
-  //     case 'success':
-  //       statusText = 'Авторизация успешно пройдена'
-  //       break;
-  //     case 'incorrectPassword':
-  //       this.messageService.add({
-  //         severity: 'warn',
-  //         summary: 'Пароль не верный',
-  //       });
-  //       break;
-  //     case 'incorrectLogin':
-  //       this.messageService.add({
-  //         severity: 'warn',
-  //         summary: 'Логин не верный',
-  //       });
-  //       break;
-  //     case 'notFound':
-  //       this.messageService.add({
-  //         severity: 'warn',
-  //         summary: 'Пользователь не найден',
-  //       });
-  //       break;
-  //     default:
-  //       this.messageService.add({
-  //         severity: 'warn',
-  //         summary: 'Что-то пошло не так',
-  //       });
-  //   }
-  //   });
-  //
-  //     this.messageService.add({
-  //       severity: 'warn',
-  //       summary: statusText
-  //       ,
-  //     });
-  // }
+      const authUser: IUser ={
+        psw: this.psw,
+        login: this.login,
+        cardNumber: this.cardNumber
+      }
+      
+      if(this.authService.checkUser(authUser)){
+        this.userService.setUser(authUser)
+        this.userService.setToken(this.login); // в качестве значения передаем рандомный токен типа стринг
 
-  onAuth(ev: Event): void {
-    const authUser: IUser = {
-      psw: this.psw,
-      login: this.login,
-    };
-    if (this.authService.checkUser(authUser)) {
-      this.router.navigate(['tickets/tickets-list']);
-      this.userService.setUser(authUser)
-      // this.messageService.add({
-      //   severity: 'success',
-      //   summary: 'Авторизация успешно пройдена',
-      // });
+        this.router.navigate(['tickets/tickets-list'])
     } else {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Логин или пароль не верный',
-      });
+      this.messageService.add({severity:'error', summary:'Неверные данные'})
     }
   }
+
+
 }

@@ -1,30 +1,141 @@
-import { Component, OnInit } from '@angular/core';
-import { TicketService } from '../../../services/tickets/ticket.service';
-import { ITour } from '../../../models/tours';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TicketsStorageService } from '../../../services/tiсkets-storage/tickets-storage.service';
+import { style } from '@angular/animations';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import { Router } from '@angular/router';
+import { Subscription, debounceTime, fromEvent } from 'rxjs';
+import { BlocksStyleDirective } from 'src/app/directive/blocks-style.directive';
+import { ITour, ITourTypeSelect } from 'src/app/models/tours';
+import { TicketsService } from 'src/app/services/tickets/tickets.service';
+import { TiсketsStorageService } from 'src/app/services/tiсkets-storage/tiсkets-storage.service';
+import { UserService } from 'src/app/services/user/user.service';
 
 @Component({
   selector: 'app-ticket-list',
   templateUrl: './ticket-list.component.html',
   styleUrls: ['./ticket-list.component.scss'],
 })
-export class TicketListComponent implements OnInit {
-  tickets: ITour[];
+export class TicketListComponent implements OnInit, AfterViewInit, OnDestroy {
+  tickets: ITour[] = [];
+  ticketsCopy: ITour[];
+  filterData: { type: ITour[] } = {
+    type: [],
+  };
+  inputSearch: string;
+  loadCountBlock: boolean;
+  loadBlock: boolean;
+  directiveReady = false;
+
+  @ViewChild('tourWrap', { read: BlocksStyleDirective })
+  blockDirective: BlocksStyleDirective;
+  @ViewChild('tourWrap') tourWrap: ElementRef;
+
+  tourUnsubscriber: Subscription;
+  @ViewChild('ticketSearch') ticketSearch: ElementRef;
+  searchTicketSub: Subscription;
+  ticketSearchValue: string;
+  ticketsLoad = false;
+
   constructor(
-    private ticketService: TicketService,
+    private ticketsService: TicketsService,
     private router: Router,
-    private route: ActivatedRoute,
-    private ticketStorage: TicketsStorageService
+    private ticketStorage: TiсketsStorageService,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
-    this.ticketService.getTickets().subscribe((data) => {
+    this.ticketsService.getTickets().subscribe((data) => {
       this.tickets = data;
+      this.ticketsCopy = [...this.tickets];
       this.ticketStorage.setStorage(data);
+      this.filterData.type = [...data];
+      this.ticketsLoad = true;
     });
+    this.loadCountBlock = true;
+
+    this.tourUnsubscriber = this.ticketsService.ticketType$.subscribe(
+      (data: ITourTypeSelect) => {
+        console.log('data', data);
+
+        let ticketType: string;
+        switch (data.value) {
+          case 'single':
+            this.tickets = this.ticketsCopy.filter(
+              (el) => el.type === 'single'
+            );
+            break;
+          case 'multi':
+            this.tickets = this.ticketsCopy.filter((el) => el.type === 'multi');
+            break;
+          case 'all':
+            this.tickets = [...this.ticketsCopy];
+            break;
+        }
+
+        this.filterData.type = [...this.tickets];
+        if (data.date) {
+          const dateWithoutTime = new Date(data.date).toISOString().split('T');
+          const dateValue = dateWithoutTime[0];
+          console.log('dateValue', dateValue);
+          this.tickets = this.ticketsCopy.filter((el) => el.date === dateValue);
+        }
+
+        setTimeout(() => {
+          this.blockDirective.updateItems();
+          this.blockDirective.initStyle(0);
+        });
+      }
+    );
   }
+
+  ngAfterViewInit(): void {
+    const fromEventObserver = fromEvent(
+      this.ticketSearch.nativeElement,
+      'keyup'
+    );
+
+    this.searchTicketSub = fromEventObserver
+      .pipe(debounceTime(200))
+      .subscribe((ev: any) => {
+        if (this.ticketSearchValue) {
+          this.tickets = this.tickets.filter((el) =>
+            el.name.toLowerCase().includes(this.ticketSearchValue)
+          );
+        } else {
+          this.tickets = this.filterData.type
+            ? [...this.filterData.type]
+            : [...this.ticketsCopy];
+        }
+
+        if (this.tickets.length <= 0) {
+          this.loadBlock = true;
+          this.loadCountBlock = false;
+        } else {
+          this.loadBlock = false;
+          this.loadCountBlock = true;
+        }
+      });
+    this.blockDirective.updateItems();
+  }
+
+  ngOnDestroy() {
+    this.tourUnsubscriber.unsubscribe();
+    this.searchTicketSub.unsubscribe();
+  }
+
   goToTicketInfoPage(item: ITour) {
     this.router.navigate([`/tickets/ticket/${item.id}`]);
+  }
+
+  directiveRenderComplete(ev: boolean) {
+    const el: HTMLElement = this.tourWrap.nativeElement;
+    el.setAttribute('Style', 'background-color : #F9F6F6');
+    this.blockDirective.initStyle(0);
+    this.directiveReady = true;
   }
 }
